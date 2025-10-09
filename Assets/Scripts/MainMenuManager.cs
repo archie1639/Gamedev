@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 public class MainMenuManager : MonoBehaviour
 {
     [Header("Menu UI")]
-    public GameObject menuPanel; // Assign your Canvas or menu panel here
+    public GameObject startMenuPanel; // Assign ONLY the start menu panel, not the whole Canvas
     
     [Header("Game Objects")]
     public GameObject player; // Assign your player here
@@ -16,24 +16,27 @@ public class MainMenuManager : MonoBehaviour
         Time.timeScale = 0f;
         
         // Disable player and other game objects
-        //if (player != null)
-            //player.SetActive(false);
+        if (player != null)
+            player.SetActive(false);
     }
     
     // Call this function when Start button is clicked
     public void StartGame()
     {
-        Debug.Log("Start button clicked!"); // Check if this appears in Console
+        Debug.Log("Start button clicked!");
         
-        // Hide the menu
-        if (menuPanel != null)
+        // Resume the game FIRST (important!)
+        Time.timeScale = 1f;
+        
+        // Hide the START MENU only (not the whole Canvas!)
+        if (startMenuPanel != null)
         {
-            menuPanel.SetActive(false);
-            Debug.Log("Menu hidden");
+            startMenuPanel.SetActive(false);
+            Debug.Log("Start Menu hidden");
         }
         else
         {
-            Debug.LogWarning("Menu Panel is not assigned!");
+            Debug.LogWarning("Start Menu Panel is not assigned!");
         }
         
         // Enable player and game objects
@@ -47,8 +50,6 @@ public class MainMenuManager : MonoBehaviour
             Debug.LogWarning("Player is not assigned!");
         }
         
-        // Resume the game
-        Time.timeScale = 1f;
         Debug.Log("Game started! Time.timeScale = " + Time.timeScale);
     }
     
