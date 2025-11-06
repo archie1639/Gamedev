@@ -14,9 +14,15 @@ public class EnemyPatrol : MonoBehaviour
     public float checkRadius = 0.2f;
     public string groundTag = "Ground";
 
+    [Header("Sound Effects")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip monsterSound;
+    [SerializeField] private float soundInterval = 3f; // Play sound every 3 seconds
+
     private Rigidbody2D rb;
     private Animator anim;
     private Transform currentPoint;
+    private float soundTimer;
 
     void Start()
     {
@@ -26,10 +32,26 @@ public class EnemyPatrol : MonoBehaviour
 
         if (anim != null)
             anim.SetBool("isRunning", true);
+
+        // Initialize audio
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+        }
+        soundTimer = soundInterval;
     }
 
     void Update()
     {
+        // Play monster sound periodically
+        soundTimer -= Time.deltaTime;
+        
+        if (soundTimer <= 0f)
+        {
+            PlayMonsterSound();
+            soundTimer = soundInterval;
+        }
+
         // Check if there's ground ahead
         bool isGroundAhead = CheckForGround();
         
@@ -91,6 +113,23 @@ public class EnemyPatrol : MonoBehaviour
             Vector3 scale = transform.localScale;
             scale.x = Mathf.Abs(scale.x);
             transform.localScale = scale;
+        }
+    }
+
+    private void PlayMonsterSound()
+    {
+        if (monsterSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(monsterSound);
+        }
+    }
+
+    // Optional: Play sound when player gets close
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            PlayMonsterSound();
         }
     }
     

@@ -11,11 +11,18 @@ public class PlayerController : MonoBehaviour
     [Header("Death Settings")]
     [SerializeField] private float respawnDelay = 2f;
 
+    [Header("Sound Effects")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip runningSound;
+    [SerializeField] private AudioClip jumpSound;
+    [SerializeField] private AudioClip deathSound;
+
     private PlayerInputActions inputActions;
     private Vector2 moveInput;
     private bool isJumpPressed = false;
     private bool isGrounded = false;
     private bool isDead = false;
+    private bool isPlayingRunSound = false;
 
     private void Awake()
     {
@@ -25,6 +32,12 @@ public class PlayerController : MonoBehaviour
         inputActions.Player.Move.canceled += ctx => moveInput = Vector2.zero;
 
         inputActions.Player.Jump.performed += ctx => isJumpPressed = true;
+
+        // Get AudioSource if not assigned
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+        }
     }
 
     private void OnEnable()
@@ -49,6 +62,9 @@ public class PlayerController : MonoBehaviour
             animator.SetBool("isRunning", Mathf.Abs(moveInput.x) > 0.1f);
             animator.SetFloat("Speed", Mathf.Abs(moveInput.x));
         }
+
+        // Handle running sound
+        HandleRunningSound();
 
         // Flip character facing direction
         if (moveInput.x != 0)
@@ -76,10 +92,35 @@ public class PlayerController : MonoBehaviour
         rb.linearVelocity = new Vector2(moveInput.x * moveSpeed, rb.linearVelocity.y);
     }
 
+    private void HandleRunningSound()
+    {
+        // Play running sound when moving on ground
+        bool shouldPlayRunSound = isGrounded && Mathf.Abs(moveInput.x) > 0.1f;
+
+        if (shouldPlayRunSound && !isPlayingRunSound && runningSound != null)
+        {
+            audioSource.clip = runningSound;
+            audioSource.loop = true;
+            audioSource.Play();
+            isPlayingRunSound = true;
+        }
+        else if (!shouldPlayRunSound && isPlayingRunSound)
+        {
+            audioSource.Stop();
+            isPlayingRunSound = false;
+        }
+    }
+
     private void Jump()
     {
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f); // Reset Y velocity
         rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+
+        // Play jump sound
+        if (jumpSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(jumpSound);
+        }
 
         if (animator != null)
         {
@@ -114,6 +155,19 @@ public class PlayerController : MonoBehaviour
     {
         isDead = true;
 
+        // Stop running sound
+        if (isPlayingRunSound)
+        {
+            audioSource.Stop();
+            isPlayingRunSound = false;
+        }
+
+        // Play death sound
+        if (deathSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(deathSound);
+        }
+
         // Stop all movement
         rb.linearVelocity = Vector2.zero;
         moveInput = Vector2.zero;
@@ -135,10 +189,17 @@ public class PlayerController : MonoBehaviour
 
     private void ShowGameOverScreen()
     {
+        Debug.Log("ShowGameOverScreen called!");
+        
         // Call GameManager to show Game Over UI
         if (GameManager.Instance != null)
         {
+            Debug.Log("GameManager found, calling ShowGameOver");
             GameManager.Instance.ShowGameOver();
+        }
+        else
+        {
+            Debug.LogError("GameManager.Instance is NULL!");
         }
     }
 }
