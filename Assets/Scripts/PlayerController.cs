@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
@@ -10,6 +11,8 @@ public class PlayerController : MonoBehaviour
 
     [Header("Death Settings")]
     [SerializeField] private float respawnDelay = 2f;
+    [SerializeField] private Image whiteFadeImage; // Assign a white UI Image that covers the screen
+    [SerializeField] private float fadeDuration = 1f;
 
     [Header("Sound Effects")]
     [SerializeField] private AudioSource audioSource;
@@ -37,6 +40,15 @@ public class PlayerController : MonoBehaviour
         if (audioSource == null)
         {
             audioSource = GetComponent<AudioSource>();
+        }
+
+        // Setup white fade image
+        if (whiteFadeImage != null)
+        {
+            Color c = whiteFadeImage.color;
+            c.a = 0f; // Start transparent
+            whiteFadeImage.color = c;
+            whiteFadeImage.gameObject.SetActive(true);
         }
     }
 
@@ -181,10 +193,34 @@ public class PlayerController : MonoBehaviour
         // Optional: Disable collider so player doesn't interact with objects
         GetComponent<Collider2D>().enabled = false;
 
+        // Start white fade
+        if (whiteFadeImage != null)
+        {
+            StartCoroutine(FadeToWhite());
+        }
+
         // Show Game Over UI after death animation finishes
         Invoke("ShowGameOverScreen", respawnDelay);
 
         Debug.Log("Player died!");
+    }
+
+    private System.Collections.IEnumerator FadeToWhite()
+    {
+        float elapsedTime = 0f;
+        Color c = whiteFadeImage.color;
+
+        while (elapsedTime < fadeDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            c.a = Mathf.Lerp(0f, 1f, elapsedTime / fadeDuration);
+            whiteFadeImage.color = c;
+            yield return null;
+        }
+
+        // Ensure it's fully white
+        c.a = 1f;
+        whiteFadeImage.color = c;
     }
 
     private void ShowGameOverScreen()
